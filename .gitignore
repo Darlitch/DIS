@@ -1,0 +1,19 @@
+**/[Bb]in/
+**/[Oo]bj/
+!**/[Oo]bj/project.assets.json
+# Default ignored files
+**/shelf/
+**/workspace.xml
+# Rider ignored files
+**/projectSettingsUpdater.xml
+**/contentModel.xml
+**/.idea.UserService.iml
+**/modules.xml
+# Editor-based HTTP Client requests
+**/httpRequests/
+# Datasource local storage ignored files
+**/dataSources/
+**/dataSources.local.xml
+**/UserService.Data/obj/**
+**/UserService.Data/obj/Debug
+**/.idea
