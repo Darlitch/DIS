@@ -12,8 +12,10 @@
 
     <ItemGroup>
       <Folder Include="Clients\" />
-      <Folder Include="Controllers\" />
-      <Folder Include="Services\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Common\Common.csproj" />
     </ItemGroup>
 
 </Project>
