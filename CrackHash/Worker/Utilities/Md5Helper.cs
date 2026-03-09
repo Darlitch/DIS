@@ -1,7 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 
-namespace Common;
+namespace Worker.Utilities;
 
 public static class Md5Helper
 {

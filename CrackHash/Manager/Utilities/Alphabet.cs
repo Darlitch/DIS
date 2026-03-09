@@ -1,4 +1,4 @@
-﻿namespace Common;
+﻿namespace Manager.Utilities;
 
 public class Alphabet
 {

@@ -1,4 +1,4 @@
-﻿namespace Common;
+﻿namespace Worker.Utilities;
 
 public static class WordGenerator
 {
@@ -25,6 +25,9 @@ public static class WordGenerator
     
     public static long CalculateTotalCombinations(int alphabetSize, int length)
     {
-        return (long)Math.Pow(alphabetSize, length);
+        long result = 1;
+        for (var i = 0; i < length; i++)
+            result *= alphabetSize;
+        return result;
     }
 }
