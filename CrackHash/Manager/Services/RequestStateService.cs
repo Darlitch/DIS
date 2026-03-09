@@ -9,9 +9,9 @@ public class RequestStateService(IMemoryCache cache)
 {
     private readonly ConcurrentDictionary<Guid, RequestState> _requests = new();
 
-    public RequestState CreateRequest(int totalParts)
+    public RequestState CreateRequest(string hash, int maxLentgth, int totalParts)
     {
-        var request = new RequestState(totalParts);
+        var request = new RequestState(hash, maxLentgth, totalParts);
         _requests[request.RequestId] = request;
         return request;
     }

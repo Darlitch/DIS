@@ -1,6 +1,7 @@
 ﻿using Contract.Api;
 using Contract.Xml;
 using Manager.Clients;
+using Manager.Models;
 using Manager.Options;
 using Manager.Utilities;
 using Microsoft.Extensions.Options;
@@ -8,7 +9,7 @@ using Microsoft.Extensions.Options;
 namespace Manager.Services;
 
 public class HashCrackService(RequestStateService requestStateService, WorkerClient workerClient,
-    IOptions<WorkerOptions> options)
+    RequestQueueService requestQueueService ,IOptions<WorkerOptions> options)
 {
     private readonly string[] _workersUrls = options.Value.WorkerUrls;
 
@@ -16,29 +17,37 @@ public class HashCrackService(RequestStateService requestStateService, WorkerCli
 
     public async Task<Guid> StartCrackAsync(HashCrackDto dto)
     {
-        var request = requestStateService.CreateRequest(_workersUrls.Length);
-        for (var i = 0; i < _workersUrls.Length; i++)
-        {
-            var task = new WorkerTaskRequest
-            {
-                RequestId = request.RequestId.ToString(),
-                PartNumber = i,
-                PartCount = _workersUrls.Length,
-                Hash = dto.hash,
-                MaxLength = dto.maxLength,
-                Alphabet = _alphabet
-            };
-            await workerClient.SendTaskAsync(_workersUrls[i], task);
-        }
+        var request = requestStateService.CreateRequest(dto.Hash,dto.MaxLength,_workersUrls.Length);
+        requestQueueService.Enqueue(request.RequestId);
+        // for (var i = 0; i < _workersUrls.Length; i++)
+        // {
+        //     var task = new WorkerTaskRequest
+        //     {
+        //         RequestId = request.RequestId.ToString(),
+        //         PartNumber = i,
+        //         PartCount = _workersUrls.Length,
+        //         Hash = dto.Hash,
+        //         MaxLength = dto.MaxLength,
+        //         Alphabet = _alphabet
+        //     };
+        //     await workerClient.SendTaskAsync(_workersUrls[i], task);
+        // }
         return request.RequestId;
     }
 
-    public CrackStatusDto GetRequestStatusAsync(Guid requestId)
+    public CrackStatusDto GetRequestStatus(Guid requestId)
     {
         if (!requestStateService.GetRequest(requestId, out var requestState))
         {
             return new CrackStatusDto(StatusEnum.ERROR, null);
         }
         return new CrackStatusDto(requestState.Status, requestState.Answers.ToArray());
+    }
+
+    public void ProcessWorkerResult(WorkerTaskResponse response)
+    {
+        var requestId = Guid.Parse(response.RequestId);
+        var answers = response.Answers?.Words ?? [];
+        requestStateService.AddAnswers(requestId, answers);
     }
 }

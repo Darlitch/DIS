@@ -18,7 +18,7 @@ public class HashController(HashCrackService hashCrackService) : ControllerBase
     [HttpGet("status")]
     public ActionResult<CrackStatusDto> GetStatus([FromQuery] Guid requestId)
     {
-        var dto = hashCrackService.GetRequestStatusAsync(requestId);
+        var dto = hashCrackService.GetRequestStatus(requestId);
         return Ok(dto);
     }
 }
