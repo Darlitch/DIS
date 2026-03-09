@@ -5,7 +5,7 @@ using Worker.Services;
 namespace Worker.Controllers;
 
 [ApiController]
-[Route("/internal/api/[controller]/hash/crack")]
+[Route("internal/api/[controller]/hash/crack")]
 public class WorkerController(BruteForceService bruteForceService, CallbackService callbackService) : ControllerBase
 {
     [HttpPost("task")]

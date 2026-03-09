@@ -16,10 +16,9 @@ public class RequestStateService(IMemoryCache cache)
         return request;
     }
 
-    public RequestState? GetRequest(Guid requestId)
+    public bool GetRequest(Guid requestId, out RequestState? request)
     {
-        _requests.TryGetValue(requestId, out var request);
-        return request;
+        return _requests.TryGetValue(requestId, out request);
     }
 
     public void AddAnswers(Guid requestId, List<string> answers)
