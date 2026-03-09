@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Common;
 
-public static class Md5helper
+public static class Md5Helper
 {
     public static string Compute(string input)
     {

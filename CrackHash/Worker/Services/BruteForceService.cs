@@ -17,7 +17,7 @@ public class BruteForceService
             long endIndex = request.PartNumber == request.PartCount-1 ? total - 1 : startIndex + partSize - 1;
             foreach (var word in WordGenerator.GenerateRange(alphabet, i, startIndex, endIndex))
             {
-                var hash = Md5helper.Compute(word);
+                var hash = Md5Helper.Compute(word);
                 if (hash == request.Hash)
                 {
                     result.Add(word);

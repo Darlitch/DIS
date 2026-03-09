@@ -11,11 +11,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Clients\" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\Common\Common.csproj" />
       <ProjectReference Include="..\Contract\Contract.csproj" />
     </ItemGroup>
 
