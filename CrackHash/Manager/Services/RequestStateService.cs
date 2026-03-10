@@ -9,9 +9,9 @@ public class RequestStateService(IMemoryCache cache)
 {
     private readonly ConcurrentDictionary<Guid, RequestState> _requests = new();
 
-    public RequestState CreateRequest(string hash, int maxLentgth, int totalParts)
+    public RequestState CreateRequest(string hash, int maxLength, int totalParts)
     {
-        var request = new RequestState(hash, maxLentgth, totalParts);
+        var request = new RequestState(hash, maxLength, totalParts);
         _requests[request.RequestId] = request;
         return request;
     }
@@ -27,39 +27,53 @@ public class RequestStateService(IMemoryCache cache)
         {
             return;
         }
-
         lock (request)
         {
             request.Answers.AddRange(answers);
             request.CompletedParts++;
-        }
-        if (request.CompletedParts == request.PartCount)
-        {
-            request.Status = StatusEnum.READY;
-        }
-    }
-
-    public void CleanupOldRequests(TimeSpan ttl) // доделать, хуета
-    {
-        var now = DateTime.UtcNow;
-        foreach (var item in _requests)
-        {
-            if (now - item.Value.CreatedAt > ttl)
+            if (request.CompletedParts == request.PartCount)
             {
-                _requests.TryRemove(item.Key, out _);
+                request.Status = StatusEnum.READY;
+                request.FinishedAt = DateTime.UtcNow;
+                SaveToCache(request.Hash, request.MaxLength, request.Answers);
+                request.Completion.TrySetResult(true);
             }
         }
     }
 
-    public void MarkError(Guid requestId)
+    public void CleanupFinishedRequests(TimeSpan ttl)
     {
-        if (_requests.TryGetValue(requestId, out var request))
+        var now = DateTime.UtcNow;
+        foreach (var (id, request) in _requests)
         {
-            request.Status = StatusEnum.ERROR;
+            if (request.FinishedAt == null)
+                continue;
+            if (now - request.FinishedAt > ttl)
+            {
+                _requests.TryRemove(id, out _);
+            }
         }
     }
     
-    public void SaveToCache(string hash, int len, IReadOnlyList<string> answers)
+    public void CheckTimeouts(TimeSpan timeout)
+    {
+        var now = DateTime.UtcNow;
+        foreach (var request in _requests.Values)
+        {
+            if (request.Status != StatusEnum.IN_PROGRESS)
+                continue;
+            if (request.StartedAt == null)
+                continue;
+            if (now - request.StartedAt > timeout)
+            {
+                request.Status = StatusEnum.ERROR;
+                request.FinishedAt = DateTime.UtcNow;
+                request.Completion.TrySetResult(false);
+            }
+        }
+    }
+    
+    private void SaveToCache(string hash, int len, IReadOnlyList<string> answers)
     {
         cache.Set($"{hash}:{len}", answers, TimeSpan.FromMinutes(60));
     }

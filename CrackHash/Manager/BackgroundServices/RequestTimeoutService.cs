@@ -4,8 +4,17 @@ namespace Manager.BackgroundServices;
 
 public class RequestTimeoutService(RequestStateService requestStateService) : BackgroundService
 {
+    private static readonly TimeSpan Timeout = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan CheckInterval = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan CleanupTtl = TimeSpan.FromMinutes(30);
+    
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            requestStateService.CheckTimeouts(Timeout);
+            requestStateService.CleanupFinishedRequests(CleanupTtl);
+            await Task.Delay(CheckInterval, stoppingToken);
+        }
     }
 }

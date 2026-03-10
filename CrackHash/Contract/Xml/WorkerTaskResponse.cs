@@ -7,5 +7,5 @@ public class WorkerTaskResponse
 {
     public string RequestId { get; set; }
     public int PartNumber { get; set; }
-    public Answers Answers { get; set; }
+    public Answers? Answers { get; set; }
 }

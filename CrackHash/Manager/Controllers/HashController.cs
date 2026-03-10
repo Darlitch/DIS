@@ -9,10 +9,14 @@ namespace Manager.Controllers;
 public class HashController(HashCrackService hashCrackService) : ControllerBase
 {
     [HttpPost("crack")]
-    public async Task<ActionResult<CrackResponseDto>> CrackTask([FromBody] HashCrackDto dto)
+    public ActionResult<CrackResponseDto> CrackTask([FromBody] HashCrackDto dto)
     {
-        var requestId = await hashCrackService.StartCrackAsync(dto);
-        return Ok(new CrackResponseDto(requestId));
+        var requestId = hashCrackService.StartCrack(dto);
+        if (requestId == null)
+        {
+            return StatusCode(429, "Queue is full");
+        } 
+        return Ok(new CrackResponseDto(requestId.Value));
     }
 
     [HttpGet("status")]

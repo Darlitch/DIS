@@ -1,6 +1,5 @@
 ﻿using Contract.Xml;
 using Manager.Services;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Manager.Controllers;
@@ -9,7 +8,7 @@ namespace Manager.Controllers;
 [Route("/internal/api/manager/hash/crack")]
 public class InternalManagerController(HashCrackService hashCrackService) : ControllerBase
 {
-    [HttpPost("reguest")]
+    [HttpPatch("request")]
     public IActionResult ReceiveResult([FromBody] WorkerTaskResponse response)
     {
         hashCrackService.ProcessWorkerResult(response);

@@ -1,37 +1,34 @@
 ﻿using Contract.Api;
 using Contract.Xml;
-using Manager.Clients;
-using Manager.Models;
 using Manager.Options;
-using Manager.Utilities;
 using Microsoft.Extensions.Options;
 
 namespace Manager.Services;
 
-public class HashCrackService(RequestStateService requestStateService, WorkerClient workerClient,
-    RequestQueueService requestQueueService ,IOptions<WorkerOptions> options)
+public class HashCrackService(RequestStateService requestStateService, RequestQueueService queue,
+    IOptions<WorkerOptions> options)
 {
     private readonly string[] _workersUrls = options.Value.WorkerUrls;
 
-    private readonly Alphabet _alphabet = CrackAlphabet.GetAlphabet();
-
-    public async Task<Guid> StartCrackAsync(HashCrackDto dto)
+    public Guid? StartCrack(HashCrackDto dto)
     {
+        if (requestStateService.TryGetCached(dto.Hash, dto.MaxLength, out var cached))
+        {
+            var cachedRequest = requestStateService.CreateRequest(dto.Hash, dto.MaxLength, 0);
+            cachedRequest.Status = StatusEnum.READY;
+            cachedRequest.Answers = cached!.ToList();
+            cachedRequest.FinishedAt = DateTime.UtcNow;
+            cachedRequest.Completion.TrySetResult(true);
+            return cachedRequest.RequestId;
+        }
         var request = requestStateService.CreateRequest(dto.Hash,dto.MaxLength,_workersUrls.Length);
-        requestQueueService.Enqueue(request.RequestId);
-        // for (var i = 0; i < _workersUrls.Length; i++)
-        // {
-        //     var task = new WorkerTaskRequest
-        //     {
-        //         RequestId = request.RequestId.ToString(),
-        //         PartNumber = i,
-        //         PartCount = _workersUrls.Length,
-        //         Hash = dto.Hash,
-        //         MaxLength = dto.MaxLength,
-        //         Alphabet = _alphabet
-        //     };
-        //     await workerClient.SendTaskAsync(_workersUrls[i], task);
-        // }
+        if (!queue.Enqueue(request.RequestId))
+        {
+            request.Status = StatusEnum.ERROR;
+            request.FinishedAt = DateTime.UtcNow;
+            request.Completion.TrySetResult(false);
+            return null;
+        }
         return request.RequestId;
     }
 
@@ -41,7 +38,7 @@ public class HashCrackService(RequestStateService requestStateService, WorkerCli
         {
             return new CrackStatusDto(StatusEnum.ERROR, null);
         }
-        return new CrackStatusDto(requestState.Status, requestState.Answers.ToArray());
+        return new CrackStatusDto(requestState!.Status, requestState.Answers.ToArray());
     }
 
     public void ProcessWorkerResult(WorkerTaskResponse response)
