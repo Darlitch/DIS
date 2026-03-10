@@ -1,0 +1,43 @@
+﻿services:
+
+  manager:
+    build:
+      context: .
+      dockerfile: Manager/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - worker1
+      - worker2
+      - worker3
+      - worker4
+    networks:
+      - crackhash-network
+
+  worker1:
+    image: worker
+    build:
+      context: .
+      dockerfile: Worker/Dockerfile
+    networks:
+      - crackhash-network
+
+  worker2:
+    image: worker
+    networks:
+      - crackhash-network
+
+  worker3:
+    image: worker
+    networks:
+      - crackhash-network
+
+  worker4:
+    image: worker
+    networks:
+      - crackhash-network
+
+
+networks:
+  crackhash-network:
+    driver: bridge

@@ -8,6 +8,7 @@ namespace Manager.Controllers;
 [Route("/internal/api/manager/hash/crack")]
 public class InternalManagerController(HashCrackService hashCrackService) : ControllerBase
 {
+    [Consumes("application/xml")]
     [HttpPatch("request")]
     public IActionResult ReceiveResult([FromBody] WorkerTaskResponse response)
     {

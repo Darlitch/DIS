@@ -8,6 +8,7 @@ namespace Manager.Controllers;
 [Route("api/[controller]")]
 public class HashController(HashCrackService hashCrackService) : ControllerBase
 {
+    [Consumes("application/json")]
     [HttpPost("crack")]
     public ActionResult<CrackResponseDto> CrackTask([FromBody] HashCrackDto dto)
     {
@@ -19,6 +20,7 @@ public class HashController(HashCrackService hashCrackService) : ControllerBase
         return Ok(new CrackResponseDto(requestId.Value));
     }
 
+    [Consumes("application/json")]
     [HttpGet("status")]
     public ActionResult<CrackStatusDto> GetStatus([FromQuery] Guid requestId)
     {
