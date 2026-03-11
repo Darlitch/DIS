@@ -7,15 +7,17 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers().AddXmlSerializerFormatters();
 
+builder.Services.AddMemoryCache();
+
 builder.Services.Configure<WorkerOptions>(builder.Configuration.GetSection("WorkerUrls"));
 
 builder.Services.AddHttpClient();
 
 builder.Services.AddSingleton<RequestQueueService>();
 builder.Services.AddSingleton<RequestStateService>();
+builder.Services.AddSingleton<WorkerClient>();
 
 builder.Services.AddScoped<HashCrackService>();
-builder.Services.AddScoped<WorkerClient>();
 
 builder.Services.AddHostedService<RequestProcessingService>();
 builder.Services.AddHostedService<RequestTimeoutService>();
