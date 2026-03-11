@@ -9,16 +9,21 @@ namespace Worker.Controllers;
 public class WorkerController(BruteForceService bruteForceService, CallbackService callbackService) : ControllerBase
 {
     [HttpPost("task")]
-    public async Task<IActionResult> CrackTask([FromBody] WorkerTaskRequest request)
+    public IActionResult CrackTask([FromBody] WorkerTaskRequest request)
     {
-        var answers = bruteForceService.FindMatches(request);
-        var response = new WorkerTaskResponse
+        _ = Task.Run(async () =>
         {
-            RequestId = request.RequestId, 
-            PartNumber = request.PartNumber,
-            Answers = new Answers{Words = answers}
-        };
-        await callbackService.SendResultAsync(response);
+            var answers = bruteForceService.FindMatches(request);
+
+            var response = new WorkerTaskResponse
+            {
+                RequestId = request.RequestId,
+                PartNumber = request.PartNumber,
+                Answers = new Answers { Words = answers }
+            };
+
+            await callbackService.SendResultAsync(response);
+        });
         return Ok();
     }
 }

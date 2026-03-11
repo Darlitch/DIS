@@ -4,7 +4,7 @@ namespace Manager.BackgroundServices;
 
 public class RequestTimeoutService(RequestStateService requestStateService) : BackgroundService
 {
-    private static readonly TimeSpan Timeout = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan Timeout = TimeSpan.FromMinutes(1);
     private static readonly TimeSpan CheckInterval = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan CleanupTtl = TimeSpan.FromMinutes(30);
     

@@ -9,7 +9,7 @@ using Microsoft.Extensions.Options;
 namespace Manager.BackgroundServices;
 
 public class RequestProcessingService(RequestStateService requestStateService, RequestQueueService queue,
-    WorkerClient workerClient, IOptions<WorkerOptions> options) : BackgroundService
+    WorkerClient workerClient, IOptions<WorkerOptions> options, ILogger<RequestProcessingService> logger) : BackgroundService
 {
     private readonly string[] _workerUrls = options.Value.WorkerUrls;
     private readonly Alphabet _alphabet = CrackAlphabet.GetAlphabet();
@@ -27,6 +27,7 @@ public class RequestProcessingService(RequestStateService requestStateService, R
                 continue;
             }
             request!.StartedAt = DateTime.UtcNow;
+            logger.LogInformation("Start processing request {RequestId}", requestId);
             await ProcessRequest(request);
             await request.Completion.Task;
         }
@@ -34,6 +35,7 @@ public class RequestProcessingService(RequestStateService requestStateService, R
 
     private async Task ProcessRequest(RequestState request)
     {
+        logger.LogInformation("_workerUrls.Length = {a}", _workerUrls.Length);
         for (var i = 0; i < _workerUrls.Length; i++)
         {
             var task = new WorkerTaskRequest
@@ -45,7 +47,15 @@ public class RequestProcessingService(RequestStateService requestStateService, R
                 MaxLength = request.MaxLength,
                 Alphabet = _alphabet
             };
-            await workerClient.SendTaskAsync(_workerUrls[i], task);
+            logger.LogInformation("Sending task to {Worker}", _workerUrls[i]);
+            try
+            {
+                await workerClient.SendTaskAsync(_workerUrls[i], task);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Worker {WorkerUrl} unavailable", _workerUrls[i]);
+            }
         }
     }
 }
