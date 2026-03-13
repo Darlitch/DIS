@@ -4,5 +4,6 @@ public enum StatusEnum
 {
     IN_PROGRESS,
     READY,
-    ERROR
+    ERROR,
+    PARTIAL_RESULT
 }

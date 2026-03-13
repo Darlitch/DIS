@@ -66,7 +66,7 @@ public class RequestStateService(IMemoryCache cache)
                 continue;
             if (now - request.StartedAt > timeout)
             {
-                request.Status = StatusEnum.ERROR;
+                request.Status = request.Answers.Count > 0 ? StatusEnum.PARTIAL_RESULT : StatusEnum.ERROR;
                 request.FinishedAt = DateTime.UtcNow;
                 request.Completion.TrySetResult(false);
             }
