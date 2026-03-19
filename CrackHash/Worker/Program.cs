@@ -1,16 +1,24 @@
 using Worker.Services;
 
-var builder = WebApplication.CreateBuilder(args);
+namespace Manager;
 
-builder.Services.AddControllers().AddXmlSerializerFormatters();
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddHttpClient();
+        builder.Services.AddControllers().AddXmlSerializerFormatters();
 
-builder.Services.AddScoped<BruteForceService>();
-builder.Services.AddScoped<CallbackService>();
+        builder.Services.AddHttpClient();
 
-var app = builder.Build();
+        builder.Services.AddScoped<BruteForceService>();
+        builder.Services.AddScoped<CallbackService>();
 
-app.MapControllers();
-app.Run();
+        var app = builder.Build();
+
+        app.MapControllers();
+        app.Run();
+    }
+}
 

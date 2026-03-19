@@ -4,32 +4,40 @@ using Manager.Clients;
 using Manager.Options;
 using Manager.Services;
 
-var builder = WebApplication.CreateBuilder(args);
+namespace Manager;
 
-builder.Services.AddControllers()
-    .AddXmlSerializerFormatters()
-    .AddJsonOptions(options =>
+public class Program
+{
+    public static void Main(string[] args)
     {
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
+        var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddMemoryCache();
+        builder.Services.AddControllers()
+            .AddXmlSerializerFormatters()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            });
 
-builder.Services.Configure<WorkerOptions>(builder.Configuration.GetSection("WorkerOptions"));
+        builder.Services.AddMemoryCache();
 
-builder.Services.AddHttpClient();
+        builder.Services.Configure<WorkerOptions>(builder.Configuration.GetSection("WorkerOptions"));
 
-builder.Services.AddSingleton<RequestQueueService>();
-builder.Services.AddSingleton<RequestStateService>();
-builder.Services.AddSingleton<WorkerClient>();
+        builder.Services.AddHttpClient();
 
-builder.Services.AddScoped<HashCrackService>();
+        builder.Services.AddSingleton<RequestQueueService>();
+        builder.Services.AddSingleton<RequestStateService>();
+        builder.Services.AddSingleton<WorkerClient>();
 
-builder.Services.AddHostedService<RequestProcessingService>();
-builder.Services.AddHostedService<RequestTimeoutService>();
+        builder.Services.AddScoped<HashCrackService>();
 
-var app = builder.Build();
+        builder.Services.AddHostedService<RequestProcessingService>();
+        builder.Services.AddHostedService<RequestTimeoutService>();
 
-app.MapControllers();
-app.Run();
+        var app = builder.Build();
+
+        app.MapControllers();
+        app.Run();
+    }
+}
 
