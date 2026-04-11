@@ -10,9 +10,9 @@ public class HashController(HashCrackService hashCrackService) : ControllerBase
 {
     [Consumes("application/json")]
     [HttpPost("crack")]
-    public ActionResult<CrackResponseDto> CrackTask([FromBody] HashCrackDto dto)
+    public async Task<ActionResult<CrackResponseDto>> CrackTask([FromBody] HashCrackDto dto)
     {
-        var requestId = hashCrackService.StartCrack(dto);
+        var requestId = await hashCrackService.StartCrack(dto);
         if (requestId == null)
         {
             return StatusCode(429, "Queue is full");
@@ -22,9 +22,9 @@ public class HashController(HashCrackService hashCrackService) : ControllerBase
 
     [Consumes("application/json")]
     [HttpGet("status")]
-    public ActionResult<CrackStatusDto> GetStatus([FromQuery] Guid requestId)
+    public async Task<ActionResult<CrackStatusDto>> GetStatus([FromQuery] Guid requestId)
     {
-        var dto = hashCrackService.GetRequestStatus(requestId);
+        var dto = await hashCrackService.GetRequestStatus(requestId);
         return Ok(dto);
     }
 }

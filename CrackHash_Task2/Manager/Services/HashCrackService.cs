@@ -5,46 +5,39 @@ using Microsoft.Extensions.Options;
 
 namespace Manager.Services;
 
-public class HashCrackService(RequestStateService requestStateService, RequestQueueService queue,
-    IOptions<WorkerOptions> options)
+public class HashCrackService(RequestRepository repository, IOptions<WorkerOptions> workerOptions, IOptions<RequestOptions> requestOptions)
 {
-    private readonly string[] _workersUrls = options.Value.WorkerUrls;
+    private readonly string[] _workersUrls = workerOptions.Value.WorkerUrls;
 
-    public Guid? StartCrack(HashCrackDto dto)
+    public async Task<Guid?> StartCrack(HashCrackDto dto, CancellationToken ct = default)
     {
-        if (requestStateService.TryGetCached(dto.Hash, dto.MaxLength, out var cached))
+        var request = await repository.GetAsync(dto.Hash, dto.MaxLength, ct);
+        if (request is null)
         {
-            var cachedRequest = requestStateService.CreateRequest(dto.Hash, dto.MaxLength, 0);
-            cachedRequest.Status = StatusEnum.READY;
-            cachedRequest.Answers = cached!.ToList();
-            cachedRequest.FinishedAt = DateTime.UtcNow;
-            cachedRequest.Completion.TrySetResult(true);
-            return cachedRequest.RequestId;
-        }
-        var request = requestStateService.CreateRequest(dto.Hash,dto.MaxLength,_workersUrls.Length);
-        if (!queue.Enqueue(request.RequestId))
-        {
-            request.Status = StatusEnum.ERROR;
-            request.FinishedAt = DateTime.UtcNow;
-            request.Completion.TrySetResult(false);
-            return null;
+            var count = await repository.CountInProgressAsync(ct);
+            if (count >= requestOptions.Value.MaxActiveRequests)
+            {
+                return null;
+            }
+            request = await repository.CreateAsync(dto.Hash,dto.MaxLength,_workersUrls.Length, ct);
         }
         return request.RequestId;
     }
 
-    public CrackStatusDto GetRequestStatus(Guid requestId)
+    public async Task<CrackStatusDto> GetRequestStatus(Guid requestId, CancellationToken ct = default)
     {
-        if (!requestStateService.GetRequest(requestId, out var requestState))
+        var request = await repository.GetAsync(requestId, ct);
+        if (request is null)
         {
             return new CrackStatusDto(StatusEnum.ERROR, null);
         }
-        return new CrackStatusDto(requestState!.Status, requestState.Answers.ToArray());
+        return new CrackStatusDto(request.Status, request.Answers.ToArray());
     }
 
-    public void ProcessWorkerResult(WorkerTaskResponse response)
+    public void ProcessWorkerResult(WorkerTaskResponse response, CancellationToken ct = default)
     {
         var requestId = Guid.Parse(response.RequestId);
         var answers = response.Answers?.Words ?? [];
-        requestStateService.AddAnswers(requestId, answers);
+        // requestStateService.AddAnswers(requestId, answers);
     }
 }
