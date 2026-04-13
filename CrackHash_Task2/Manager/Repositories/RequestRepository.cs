@@ -1,11 +1,10 @@
-﻿using Contract.Api;
+﻿using Contract.Api.Enums;
 using Manager.Models;
-using MongoDB.Bson;
 using MongoDB.Driver;
 
-namespace Manager.Services;
+namespace Manager.Repositories;
 
-public class RequestRepository (IMongoDatabase database)
+public class RequestRepository(IMongoDatabase database)
 {
     private readonly IMongoCollection<RequestDocument> _requests =
         database.GetCollection<RequestDocument>("requests").WithWriteConcern(WriteConcern.WMajority);
@@ -34,7 +33,7 @@ public class RequestRepository (IMongoDatabase database)
     
     public Task<long> CountInProgressAsync(CancellationToken ct = default)
     {
-        return _requests.CountDocumentsAsync(x => x.Status == StatusEnum.IN_PROGRESS, cancellationToken: ct);
+        return _requests.CountDocumentsAsync(x => x.Status == RequestStatus.IN_PROGRESS, cancellationToken: ct);
     }
     
     public Task<RequestDocument?> GetAsync(Guid requestId, CancellationToken ct = default)
@@ -47,12 +46,12 @@ public class RequestRepository (IMongoDatabase database)
         return _requests.Find(x => x.Hash == hash && x.MaxLength == maxLength).FirstOrDefaultAsync(ct);
     }
     
-    public Task UpdateProgressAsync(Guid requestId, List<string> answers, int completedParts, StatusEnum status, CancellationToken ct)
+    public Task UpdateProgressAsync(Guid requestId, List<string> answers, int completedParts, RequestStatus requestStatus, CancellationToken ct)
     {
         var update = Builders<RequestDocument>.Update
             .Set(x => x.Answers, answers)
             .Set(x => x.CompletedParts, completedParts)
-            .Set(x => x.Status, status)
+            .Set(x => x.Status, requestStatus)
             .Set(x => x.UpdatedAt, DateTime.UtcNow);
 
         return _requests.UpdateOneAsync(x => x.RequestId == requestId, update, cancellationToken: ct);

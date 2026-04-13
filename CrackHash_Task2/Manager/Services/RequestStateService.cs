@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using Contract.Api;
+using Contract.Api.Enums;
 using Manager.Models;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -33,7 +34,7 @@ public class RequestStateService(IMemoryCache cache)
             request.CompletedParts++;
             if (request.CompletedParts == request.PartCount)
             {
-                request.Status = StatusEnum.READY;
+                request.RequestStatus = RequestStatus.READY;
                 request.FinishedAt = DateTime.UtcNow;
                 SaveToCache(request.Hash, request.MaxLength, request.Answers);
                 request.Completion.TrySetResult(true);
@@ -60,13 +61,13 @@ public class RequestStateService(IMemoryCache cache)
         var now = DateTime.UtcNow;
         foreach (var request in _requests.Values)
         {
-            if (request.Status != StatusEnum.IN_PROGRESS)
+            if (request.RequestStatus != RequestStatus.IN_PROGRESS)
                 continue;
             if (request.StartedAt == null)
                 continue;
             if (now - request.StartedAt > timeout)
             {
-                request.Status = request.Answers.Count > 0 ? StatusEnum.PARTIAL_RESULT : StatusEnum.ERROR;
+                request.RequestStatus = request.Answers.Count > 0 ? RequestStatus.PARTIAL_RESULT : RequestStatus.ERROR;
                 request.FinishedAt = DateTime.UtcNow;
                 request.Completion.TrySetResult(false);
             }

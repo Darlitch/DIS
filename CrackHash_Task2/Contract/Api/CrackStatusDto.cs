@@ -1,3 +1,5 @@
-﻿namespace Contract.Api;
+﻿using Contract.Api.Enums;
 
-public record CrackStatusDto(StatusEnum Status, string[]? Data);
+namespace Contract.Api;
+
+public record CrackStatusDto(RequestStatus RequestStatus, string[]? Data);

@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using Manager.BackgroundServices;
 using Manager.Clients;
 using Manager.Options;
+using Manager.Repositories;
 using Manager.Services;
 using MongoDB.Driver;
 
@@ -32,6 +33,7 @@ public class Program
         builder.Services.AddSingleton<RequestStateService>();
         builder.Services.AddSingleton<WorkerClient>();
         builder.Services.AddSingleton<RequestRepository>();
+        builder.Services.AddSingleton<SubtaskRepository>();
         builder.Services.AddSingleton<IMongoClient>(sp =>
         {
             var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<MongoOptions>>().Value;

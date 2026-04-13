@@ -1,6 +1,6 @@
-﻿namespace Contract.Api;
+﻿namespace Contract.Api.Enums;
 
-public enum StatusEnum
+public enum RequestStatus
 {
     IN_PROGRESS,
     READY,

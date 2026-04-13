@@ -21,7 +21,7 @@ public class HashController(HashCrackService hashCrackService) : ControllerBase
     }
 
     [Consumes("application/json")]
-    [HttpGet("status")]
+    [HttpGet("requestStatus")]
     public async Task<ActionResult<CrackStatusDto>> GetStatus([FromQuery] Guid requestId)
     {
         var dto = await hashCrackService.GetRequestStatus(requestId);

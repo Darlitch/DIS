@@ -1,6 +1,6 @@
 using Worker.Services;
 
-namespace Manager;
+namespace Worker;
 
 public class Program
 {
