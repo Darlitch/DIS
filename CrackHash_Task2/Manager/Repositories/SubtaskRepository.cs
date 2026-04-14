@@ -43,6 +43,13 @@ public class SubtaskRepository(IMongoDatabase database)
     {
         return await _subtasks.Find(x => x.RequestId == requestId && x.PartNumber == partNumber).FirstOrDefaultAsync(ct);
     }
+    
+    public async Task<List<SubtaskDocument>> GetPendingDispatchAsync(CancellationToken ct = default)
+    {
+        return await _subtasks
+            .Find(x => x.Status == SubtaskStatus.PENDING_DISPATCH)
+            .ToListAsync(ct);
+    }
 
     public Task UpdateAnswersAsync(Guid requestId, int partNumber, List<string> answers, CancellationToken ct = default)
     {

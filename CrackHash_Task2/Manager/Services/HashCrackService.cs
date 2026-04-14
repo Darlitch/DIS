@@ -36,8 +36,16 @@ public class HashCrackService(RequestRepository requestRepository, SubtaskReposi
                     MaxLength = request.MaxLength,
                     Alphabet = CrackAlphabet.GetAlphabet()
                 };
-                await taskPublisher.PublishAsync(workerTask, ct);
-                await subtaskRepository.UpdateStatusAsync(request.RequestId, i, SubtaskStatus.QUEUED, ct);
+                try
+                {
+                    await taskPublisher.PublishAsync(workerTask, ct);
+                    await subtaskRepository.UpdateStatusAsync(request.RequestId, i, SubtaskStatus.QUEUED, ct);
+                }
+                catch
+                {
+                    // RabbitMQ недоступен, подзадача останется PENDING_DISPATCH
+                }
+                
             }
         }
         return request.RequestId;

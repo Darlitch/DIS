@@ -51,6 +51,7 @@ public class Program
 
         builder.Services.AddHostedService<RequestTimeoutService>();
         builder.Services.AddHostedService<ResultConsumerService>();
+        builder.Services.AddHostedService<PendingDispatchService>();
 
         var app = builder.Build();
         
