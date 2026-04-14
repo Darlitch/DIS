@@ -1,6 +1,5 @@
 using System.Text.Json.Serialization;
 using Manager.BackgroundServices;
-using Manager.Clients;
 using Manager.Options;
 using Manager.Repositories;
 using Manager.Services;
@@ -26,14 +25,14 @@ public class Program
         builder.Services.Configure<WorkerOptions>(builder.Configuration.GetSection("WorkerOptions"));
         builder.Services.Configure<MongoOptions>(builder.Configuration.GetSection("MongoOptions"));
         builder.Services.Configure<RequestOptions>(builder.Configuration.GetSection("RequestOptions"));
+        builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("RabbitMqOptions"));
 
         builder.Services.AddHttpClient();
 
-        builder.Services.AddSingleton<RequestQueueService>();
-        builder.Services.AddSingleton<RequestStateService>();
-        builder.Services.AddSingleton<WorkerClient>();
+        
         builder.Services.AddSingleton<RequestRepository>();
         builder.Services.AddSingleton<SubtaskRepository>();
+        builder.Services.AddSingleton<TaskPublisher>();
         builder.Services.AddSingleton<IMongoClient>(sp =>
         {
             var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<MongoOptions>>().Value;
@@ -51,15 +50,16 @@ public class Program
 
         builder.Services.AddScoped<HashCrackService>();
 
-        builder.Services.AddHostedService<RequestProcessingService>();
         builder.Services.AddHostedService<RequestTimeoutService>();
 
         var app = builder.Build();
         
         using (var scope = app.Services.CreateScope())
         {
-            var repo = scope.ServiceProvider.GetRequiredService<RequestRepository>();
-            repo.CreateIndexesAsync(CancellationToken.None).GetAwaiter().GetResult();
+            var rRepo = scope.ServiceProvider.GetRequiredService<RequestRepository>();
+            rRepo.CreateIndexesAsync(CancellationToken.None).GetAwaiter().GetResult();
+            var sRepo = scope.ServiceProvider.GetRequiredService<SubtaskRepository>();
+            sRepo.CreateIndexesAsync(CancellationToken.None).GetAwaiter().GetResult();
         }
 
         app.MapControllers();

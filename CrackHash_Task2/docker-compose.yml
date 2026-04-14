@@ -88,11 +88,23 @@
     networks:
       - crackhash-network
     restart: "no"
+    
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - crackhash-network
 
 volumes:
   mongo1_data:
   mongo2_data:
   mongo3_data:
+  rabbitmq_data:
 
 networks:
   crackhash-network:

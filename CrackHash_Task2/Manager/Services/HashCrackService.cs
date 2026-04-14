@@ -3,11 +3,13 @@ using Contract.Api.Enums;
 using Contract.Xml;
 using Manager.Options;
 using Manager.Repositories;
+using Manager.Utilities;
 using Microsoft.Extensions.Options;
 
 namespace Manager.Services;
 
-public class HashCrackService(RequestRepository requestRepository, SubtaskRepository subtaskRepository, IOptions<WorkerOptions> workerOptions, IOptions<RequestOptions> requestOptions)
+public class HashCrackService(RequestRepository requestRepository, SubtaskRepository subtaskRepository,
+    TaskPublisher taskPublisher, IOptions<WorkerOptions> workerOptions, IOptions<RequestOptions> requestOptions)
 {
     private readonly string[] _workersUrls = workerOptions.Value.WorkerUrls;
 
@@ -25,6 +27,17 @@ public class HashCrackService(RequestRepository requestRepository, SubtaskReposi
             for (var i = 0; i < _workersUrls.Length; i++)
             {
                 await subtaskRepository.CreateAsync(request, i, ct);
+                var workerTask = new WorkerTaskRequest
+                {
+                    RequestId = request.RequestId.ToString(),
+                    PartNumber = i,
+                    PartCount = request.PartCount,
+                    Hash = request.Hash,
+                    MaxLength = request.MaxLength,
+                    Alphabet = CrackAlphabet.GetAlphabet()
+                };
+                await taskPublisher.PublishAsync(workerTask, ct);
+                await subtaskRepository.UpdateStatusAsync(request.RequestId, i, SubtaskStatus.QUEUED, ct);
             }
         }
         return request.RequestId;
