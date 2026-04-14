@@ -1,3 +1,4 @@
+using Worker.BackgroundServices;
 using Worker.Options;
 using Worker.Services;
 
@@ -15,8 +16,10 @@ public class Program
 
         builder.Services.AddHttpClient();
 
+        builder.Services.AddHostedService<TaskConsumerService>();
+
         builder.Services.AddScoped<BruteForceService>();
-        builder.Services.AddScoped<CallbackService>();
+        builder.Services.AddScoped<ResultPublisher>();
 
         var app = builder.Build();
 

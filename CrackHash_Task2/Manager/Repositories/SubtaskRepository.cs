@@ -34,20 +34,21 @@ public class SubtaskRepository(IMongoDatabase database)
         return doc;
     }
     
-    public Task<long> CountNotCompletedAsync(Guid requestId, CancellationToken ct = default)
+    public async Task<long> CountNotCompletedAsync(Guid requestId, CancellationToken ct = default)
     {
-        return _subtasks.CountDocumentsAsync(x =>x.RequestId == requestId && x.Status != SubtaskStatus.COMPLETED, cancellationToken: ct);
+        return await _subtasks.CountDocumentsAsync(x =>x.RequestId == requestId && x.Status != SubtaskStatus.COMPLETED, cancellationToken: ct);
     }
     
-    public Task<SubtaskDocument?> GetAsync(Guid requestId, int partNumber, CancellationToken ct = default)
+    public async Task<SubtaskDocument?> GetAsync(Guid requestId, int partNumber, CancellationToken ct = default)
     {
-        return _subtasks.Find(x => x.RequestId == requestId && x.PartNumber == partNumber).FirstOrDefaultAsync(ct);
+        return await _subtasks.Find(x => x.RequestId == requestId && x.PartNumber == partNumber).FirstOrDefaultAsync(ct);
     }
 
     public Task UpdateAnswersAsync(Guid requestId, int partNumber, List<string> answers, CancellationToken ct = default)
     {
         var update = Builders<SubtaskDocument>.Update
             .Set(x => x.Answers, answers)
+            .Set(x => x.Status, SubtaskStatus.COMPLETED)
             .Set(x => x.UpdatedAt, DateTime.UtcNow);
         return _subtasks.UpdateOneAsync(x => x.RequestId == requestId && x.PartNumber == partNumber, update, cancellationToken: ct);
     }

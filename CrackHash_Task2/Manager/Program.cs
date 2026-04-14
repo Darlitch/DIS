@@ -28,7 +28,6 @@ public class Program
         builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("RabbitMqOptions"));
 
         builder.Services.AddHttpClient();
-
         
         builder.Services.AddSingleton<RequestRepository>();
         builder.Services.AddSingleton<SubtaskRepository>();
@@ -51,6 +50,7 @@ public class Program
         builder.Services.AddScoped<HashCrackService>();
 
         builder.Services.AddHostedService<RequestTimeoutService>();
+        builder.Services.AddHostedService<ResultConsumerService>();
 
         var app = builder.Build();
         

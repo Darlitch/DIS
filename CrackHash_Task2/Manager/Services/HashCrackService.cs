@@ -53,10 +53,21 @@ public class HashCrackService(RequestRepository requestRepository, SubtaskReposi
         return new CrackStatusDto(request.Status, request.Answers.ToArray());
     }
 
-    public void ProcessWorkerResult(WorkerTaskResponse response, CancellationToken ct = default)
+    public async Task ProcessWorkerResult(WorkerTaskResponse response, CancellationToken ct = default)
     {
         var requestId = Guid.Parse(response.RequestId);
         var answers = response.Answers?.Words ?? [];
-        // requestStateService.AddAnswers(requestId, answers);
+        var subtask = await subtaskRepository.GetAsync(requestId, response.PartNumber, ct);
+        if (subtask == null || subtask.Status == SubtaskStatus.COMPLETED)
+        {
+            return;
+        }
+        await subtaskRepository.UpdateAnswersAsync(requestId, response.PartNumber, answers, ct);
+        await requestRepository.AddAnswersAsync(requestId, answers, ct);
+        long countNotCompleted = await subtaskRepository.CountNotCompletedAsync(requestId, ct);
+        if (countNotCompleted == 0)
+        {
+            await requestRepository.UpdateStatusAsync(requestId, RequestStatus.READY, ct);
+        }
     }
 }

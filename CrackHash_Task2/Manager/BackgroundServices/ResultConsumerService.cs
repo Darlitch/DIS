@@ -1,19 +1,20 @@
-﻿using System.Text;
-using System.Xml;
-using System.Xml.Serialization;
+﻿using System.Xml.Serialization;
 using Contract.Messaging;
 using Contract.Xml;
+using Manager.Options;
+using Manager.Repositories;
+using Manager.Services;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
-using Worker.Options;
+using RabbitMQ.Client.Events;
 
-namespace Worker.Services;
+namespace Manager.BackgroundServices;
 
-public class ResultPublisher(IOptions<RabbitMqOptions> rabbitOptions)
+public class ResultConsumerService(HashCrackService hashCrackService, IOptions<RabbitMqOptions> rabbitOptions) : BackgroundService
 {
     private readonly RabbitMqOptions _options = rabbitOptions.Value;
-
-    public async Task PublishAsync(WorkerTaskResponse response, CancellationToken ct = default)
+    
+    protected override async Task ExecuteAsync(CancellationToken ct)
     {
         var factory = new ConnectionFactory
         {
@@ -23,9 +24,10 @@ public class ResultPublisher(IOptions<RabbitMqOptions> rabbitOptions)
             Password = _options.Password,
             VirtualHost = _options.VirtualHost
         };
+        
         await using var connection = await factory.CreateConnectionAsync(ct);
         await using var channel = await connection.CreateChannelAsync(cancellationToken: ct);
-
+        
         await channel.ExchangeDeclareAsync(
             exchange: MessagingTopology.ResultExchange,
             type: ExchangeType.Direct,
@@ -48,30 +50,30 @@ public class ResultPublisher(IOptions<RabbitMqOptions> rabbitOptions)
             arguments: null,
             cancellationToken: ct);
         
-        var serializer = new XmlSerializer(typeof(WorkerTaskResponse));
-        using var stream = new MemoryStream();
-        var settings = new XmlWriterSettings
+        var consumer = new AsyncEventingBasicConsumer(channel);
+        consumer.ReceivedAsync += async (_, ea) =>
         {
-            Encoding = Encoding.UTF8,
-            OmitXmlDeclaration = false
-        };
-        using (var writer = XmlWriter.Create(stream, settings))
-        {
-            serializer.Serialize(writer, response);
-        }
-        var body = stream.ToArray();
-        var properties = new BasicProperties
-        {
-            Persistent = true,
-            ContentType = "application/xml"
-        };
+            try
+            {
+                var serializer = new XmlSerializer(typeof(WorkerTaskResponse));
+                using var stream = new MemoryStream(ea.Body.ToArray());
+                var response = (WorkerTaskResponse)serializer.Deserialize(stream)!;
 
-        await channel.BasicPublishAsync(
-            exchange: MessagingTopology.ResultExchange,
-            routingKey: MessagingTopology.ResultRoutingKey,
-            mandatory: false,
-            basicProperties: properties,
-            body: body,
+                await hashCrackService.ProcessWorkerResult(response, ct);
+                await channel.BasicAckAsync(ea.DeliveryTag, false, ct);
+            }
+            catch
+            {
+                await channel.BasicNackAsync(ea.DeliveryTag, false, true, ct);
+            }
+        };
+        
+        await channel.BasicConsumeAsync(
+            queue: MessagingTopology.ResultQueue,
+            autoAck: false,
+            consumer: consumer,
             cancellationToken: ct);
+
+        await Task.Delay(Timeout.Infinite, ct);
     }
 }

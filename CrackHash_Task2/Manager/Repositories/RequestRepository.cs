@@ -36,24 +36,29 @@ public class RequestRepository(IMongoDatabase database)
         return _requests.CountDocumentsAsync(x => x.Status == RequestStatus.IN_PROGRESS, cancellationToken: ct);
     }
     
-    public Task<RequestDocument?> GetAsync(Guid requestId, CancellationToken ct = default)
+    public async Task<RequestDocument?> GetAsync(Guid requestId, CancellationToken ct = default)
     {
-        return _requests.Find(x => x.RequestId == requestId).FirstOrDefaultAsync(ct);
+        return await _requests.Find(x => x.RequestId == requestId).FirstOrDefaultAsync(ct);
     }
     
-    public Task<RequestDocument?> GetAsync(string hash, int maxLength, CancellationToken ct = default)
+    public async Task<RequestDocument?> GetAsync(string hash, int maxLength, CancellationToken ct = default)
     {
-        return _requests.Find(x => x.Hash == hash && x.MaxLength == maxLength).FirstOrDefaultAsync(ct);
+        return await _requests.Find(x => x.Hash == hash && x.MaxLength == maxLength).FirstOrDefaultAsync(ct);
     }
-    
-    public Task UpdateProgressAsync(Guid requestId, List<string> answers, int completedParts, RequestStatus requestStatus, CancellationToken ct)
+
+    public Task AddAnswersAsync(Guid requestId, List<string> answers, CancellationToken ct = default)
     {
         var update = Builders<RequestDocument>.Update
-            .Set(x => x.Answers, answers)
-            .Set(x => x.CompletedParts, completedParts)
+            .AddToSetEach(x => x.Answers, answers)
+            .Set(x => x.UpdatedAt, DateTime.UtcNow);
+        return _requests.UpdateOneAsync(x => x.RequestId == requestId, update, cancellationToken: ct);
+    }
+
+    public Task UpdateStatusAsync(Guid requestId, RequestStatus requestStatus, CancellationToken ct = default)
+    {
+        var update = Builders<RequestDocument>.Update
             .Set(x => x.Status, requestStatus)
             .Set(x => x.UpdatedAt, DateTime.UtcNow);
-
         return _requests.UpdateOneAsync(x => x.RequestId == requestId, update, cancellationToken: ct);
     }
 
