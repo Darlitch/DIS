@@ -18,8 +18,8 @@ public class Program
 
         builder.Services.AddHostedService<TaskConsumerService>();
 
-        builder.Services.AddScoped<BruteForceService>();
-        builder.Services.AddScoped<ResultPublisher>();
+        builder.Services.AddSingleton<BruteForceService>();
+        builder.Services.AddSingleton<ResultPublisher>();
 
         var app = builder.Build();
 

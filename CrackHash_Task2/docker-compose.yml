@@ -23,6 +23,7 @@
     build:
       context: .
       dockerfile: Worker/Dockerfile
+    image: crack-hash-worker:dev
     restart: unless-stopped
     depends_on:
       rabbitmq:
@@ -31,9 +32,7 @@
       - crack-hash-network
 
   worker2:
-    build:
-      context: .
-      dockerfile: Worker/Dockerfile
+    image: crack-hash-worker:dev
     restart: unless-stopped
     depends_on:
       rabbitmq:
@@ -42,9 +41,7 @@
       - crack-hash-network
 
   worker3:
-    build:
-      context: .
-      dockerfile: Worker/Dockerfile
+    image: crack-hash-worker:dev
     restart: unless-stopped
     depends_on:
       rabbitmq:
@@ -53,9 +50,7 @@
       - crack-hash-network
 
   worker4:
-    build:
-      context: .
-      dockerfile: Worker/Dockerfile
+    image: crack-hash-worker:dev
     restart: unless-stopped
     depends_on:
       rabbitmq:

@@ -19,7 +19,7 @@ public class HashController(HashCrackService hashCrackService) : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(503, "Service temporarily unavailable. Please try again later.");
+            return StatusCode(503, ex.ToString());
         }
         if (requestId == null)
         {

@@ -9,12 +9,9 @@ public class RequestRepository(IMongoDatabase database)
     private readonly IMongoCollection<RequestDocument> _requests =
         database.GetCollection<RequestDocument>("requests").WithWriteConcern(WriteConcern.WMajority);
 
-    public async Task CreateIndexesAsync(CancellationToken ct = default)
+    public Task CreateIndexesAsync(CancellationToken ct = default)
     {
-        var index = new CreateIndexModel<RequestDocument>(
-            Builders<RequestDocument>.IndexKeys.Ascending(x => x.RequestId),
-            new CreateIndexOptions { Unique = true });
-        await _requests.Indexes.CreateOneAsync(index, cancellationToken: ct);
+        return Task.CompletedTask;
     }
 
     public async Task<RequestDocument> CreateAsync(IClientSessionHandle session, string hash,

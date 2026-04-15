@@ -1,5 +1,6 @@
 ﻿using Contract.Api;
 using Contract.Api.Enums;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace Manager.Models;
@@ -7,6 +8,7 @@ namespace Manager.Models;
 public class RequestDocument
 {
     [BsonId]
+    [BsonGuidRepresentation(GuidRepresentation.Standard)]
     public Guid RequestId { get; set; }
 
     public string Hash { get; set; } = string.Empty;

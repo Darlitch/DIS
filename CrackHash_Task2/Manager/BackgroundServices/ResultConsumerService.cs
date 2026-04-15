@@ -10,7 +10,7 @@ using RabbitMQ.Client.Events;
 
 namespace Manager.BackgroundServices;
 
-public class ResultConsumerService(HashCrackService hashCrackService, IOptions<RabbitMqOptions> rabbitOptions) : BackgroundService
+public class ResultConsumerService(IServiceScopeFactory scopeFactory, IOptions<RabbitMqOptions> rabbitOptions) : BackgroundService
 {
     private readonly RabbitMqOptions _options = rabbitOptions.Value;
     
@@ -62,7 +62,9 @@ public class ResultConsumerService(HashCrackService hashCrackService, IOptions<R
                         var serializer = new XmlSerializer(typeof(WorkerTaskResponse));
                         using var stream = new MemoryStream(ea.Body.ToArray());
                         var response = (WorkerTaskResponse)serializer.Deserialize(stream)!;
-
+                        using var scope = scopeFactory.CreateScope();
+                        var hashCrackService = scope.ServiceProvider.GetRequiredService<HashCrackService>();
+                        await hashCrackService.ProcessWorkerResult(response, ct);
                         await hashCrackService.ProcessWorkerResult(response, ct);
                         await channel.BasicAckAsync(ea.DeliveryTag, false, ct);
                     }

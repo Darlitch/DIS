@@ -10,6 +10,7 @@ public class SubtaskDocument
     [BsonId]
     public ObjectId Id { get; set; }
     
+    [BsonGuidRepresentation(GuidRepresentation.Standard)]
     public Guid RequestId { get; set; }
     public string Hash { get; set; } = string.Empty;
     public int MaxLength { get; set; }
