@@ -17,8 +17,8 @@ public class RequestRepository(IMongoDatabase database)
         await _requests.Indexes.CreateOneAsync(index, cancellationToken: ct);
     }
 
-    public async Task<RequestDocument> CreateAsync(string hash, int maxLength, int partCount,
-        CancellationToken ct = default)
+    public async Task<RequestDocument> CreateAsync(IClientSessionHandle session, string hash,
+        int maxLength, int partCount, CancellationToken ct = default)
     {
         var doc = new RequestDocument
         {
@@ -27,7 +27,8 @@ public class RequestRepository(IMongoDatabase database)
             MaxLength = maxLength,
             PartCount = partCount
         };
-        await _requests.InsertOneAsync(doc, cancellationToken: ct);
+
+        await _requests.InsertOneAsync(session, doc, cancellationToken: ct);
         return doc;
     }
     

@@ -48,8 +48,7 @@ public class Program
 
 
         builder.Services.AddScoped<HashCrackService>();
-
-        builder.Services.AddHostedService<RequestTimeoutService>();
+        
         builder.Services.AddHostedService<ResultConsumerService>();
         builder.Services.AddHostedService<PendingDispatchService>();
 

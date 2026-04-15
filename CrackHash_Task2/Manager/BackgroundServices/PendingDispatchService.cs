@@ -35,7 +35,7 @@ public class PendingDispatchService(SubtaskRepository subtaskRepository, TaskPub
                     // RabbitMQ недоступен, подзадача останется PENDING_DISPATCH
                 }
             }
-            
+            await Task.Delay(TimeSpan.FromSeconds(5), ct);
         }
     }
 }

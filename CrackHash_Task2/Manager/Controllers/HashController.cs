@@ -12,10 +12,18 @@ public class HashController(HashCrackService hashCrackService) : ControllerBase
     [HttpPost("crack")]
     public async Task<ActionResult<CrackResponseDto>> CrackTask([FromBody] HashCrackDto dto)
     {
-        var requestId = await hashCrackService.StartCrack(dto);
+        Guid? requestId;
+        try
+        {
+            requestId = await hashCrackService.StartCrack(dto);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(503, "Service temporarily unavailable. Please try again later.");
+        }
         if (requestId == null)
         {
-            return StatusCode(429, "Queue is full");
+            return StatusCode(429, "Queue is full. Please try again later.");
         } 
         return Ok(new CrackResponseDto(requestId.Value));
     }

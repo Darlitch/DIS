@@ -19,19 +19,20 @@ public class SubtaskRepository(IMongoDatabase database)
         await _subtasks.Indexes.CreateOneAsync(index, cancellationToken: ct);
     }
     
-    public async Task<SubtaskDocument> CreateAsync(RequestDocument request, int partNumber,
-        CancellationToken ct = default)
+    public Task CreateManyAsync(IClientSessionHandle session, RequestDocument request, CancellationToken ct = default)
     {
-        var doc = new SubtaskDocument
-        {
-            RequestId = request.RequestId,
-            Hash = request.Hash,
-            MaxLength = request.MaxLength,
-            PartCount = request.PartCount,
-            PartNumber = partNumber
-        };
-        await _subtasks.InsertOneAsync(doc, cancellationToken: ct);
-        return doc;
+        var subtasks = Enumerable.Range(0, request.PartCount)
+            .Select(i => new SubtaskDocument
+            {
+                RequestId = request.RequestId,
+                Hash = request.Hash,
+                MaxLength = request.MaxLength,
+                PartCount = request.PartCount,
+                PartNumber = i
+            })
+            .ToList();
+
+        return _subtasks.InsertManyAsync(session, subtasks, cancellationToken: ct);
     }
     
     public async Task<long> CountNotCompletedAsync(Guid requestId, CancellationToken ct = default)
@@ -48,6 +49,7 @@ public class SubtaskRepository(IMongoDatabase database)
     {
         return await _subtasks
             .Find(x => x.Status == SubtaskStatus.PENDING_DISPATCH)
+            .SortBy(x => x.CreatedAt)
             .ToListAsync(ct);
     }
 

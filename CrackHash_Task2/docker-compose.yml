@@ -4,76 +4,100 @@
     build:
       context: .
       dockerfile: Manager/Dockerfile
+    restart: unless-stopped
     ports:
       - "8080:8080"
     depends_on:
-      - worker1
-      - worker2
-      - worker3
-      - worker4
+      rabbitmq:
+        condition: service_healthy
+      mongo1:
+        condition: service_started
+      mongo2:
+        condition: service_started
+      mongo3:
+        condition: service_started
     networks:
-      - crackhash-network
+      - crack-hash-network
 
   worker1:
     build:
       context: .
       dockerfile: Worker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     networks:
-      - crackhash-network
+      - crack-hash-network
 
   worker2:
     build:
       context: .
       dockerfile: Worker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     networks:
-      - crackhash-network
+      - crack-hash-network
 
   worker3:
     build:
       context: .
       dockerfile: Worker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     networks:
-      - crackhash-network
+      - crack-hash-network
 
   worker4:
     build:
       context: .
       dockerfile: Worker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     networks:
-      - crackhash-network
+      - crack-hash-network
     
   mongo1:
     image: mongo:7
     container_name: mongo1
     command: [ "mongod", "--replSet", "rs0", "--bind_ip_all" ]
+    restart: unless-stopped
     ports:
       - "27017:27017"
     volumes:
       - mongo1_data:/data/db
     networks:
-      - crackhash-network
+      - crack-hash-network
 
   mongo2:
     image: mongo:7
     container_name: mongo2
     command: [ "mongod", "--replSet", "rs0", "--bind_ip_all" ]
+    restart: unless-stopped
     ports:
       - "27018:27017"
     volumes:
       - mongo2_data:/data/db
     networks:
-      - crackhash-network
+      - crack-hash-network
 
   mongo3:
     image: mongo:7
     container_name: mongo3
     command: [ "mongod", "--replSet", "rs0", "--bind_ip_all" ]
+    restart: unless-stopped
     ports:
       - "27019:27017"
     volumes:
       - mongo3_data:/data/db
     networks:
-      - crackhash-network
+      - crack-hash-network
     
   mongo-setup:
     image: mongo:7
@@ -86,7 +110,7 @@
       - ./mongo-init:/scripts
     entrypoint: [ "bash", "-c", "sleep 8 && mongosh mongodb://mongo1:27017 /scripts/init-replica.js" ]
     networks:
-      - crackhash-network
+      - crack-hash-network
     restart: "no"
     
   rabbitmq:
@@ -95,10 +119,17 @@
     ports:
       - "5672:5672"
       - "15672:15672"
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
     networks:
-      - crackhash-network
+      - crack-hash-network
 
 volumes:
   mongo1_data:
@@ -107,5 +138,5 @@ volumes:
   rabbitmq_data:
 
 networks:
-  crackhash-network:
+  crack-hash-network:
     driver: bridge
