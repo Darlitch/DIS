@@ -51,6 +51,7 @@ public class Program
         
         builder.Services.AddHostedService<ResultConsumerService>();
         builder.Services.AddHostedService<PendingDispatchService>();
+        builder.Services.AddHostedService<SubtaskRecoveryService>();
 
         var app = builder.Build();
         

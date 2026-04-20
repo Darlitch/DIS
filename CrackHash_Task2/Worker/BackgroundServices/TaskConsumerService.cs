@@ -10,7 +10,7 @@ using Worker.Services;
 namespace Worker.BackgroundServices;
 
 public class TaskConsumerService(BruteForceService bruteForceService, ResultPublisher resultPublisher,
-    IOptions<RabbitMqOptions> rabbitOptions) : BackgroundService
+    IOptions<RabbitMqOptions> rabbitOptions, ILogger<TaskConsumerService> logger) : BackgroundService
 {
     private readonly RabbitMqOptions _options = rabbitOptions.Value;
     
@@ -74,9 +74,24 @@ public class TaskConsumerService(BruteForceService bruteForceService, ResultPubl
                             PartNumber = request.PartNumber,
                             Answers = new Answers { Words = answers }
                         };
-
-                        await resultPublisher.PublishAsync(response, ct);
-                        await channel.BasicAckAsync(ea.DeliveryTag, false, ct);
+                        var published = false;
+                        while (!published && !ct.IsCancellationRequested)
+                        {
+                            try
+                            {
+                                await resultPublisher.PublishAsync(response, ct);
+                                published = true;
+                            }
+                            catch (Exception ex)
+                            {
+                                logger.LogWarning(ex, $"Failed to publish result for {request.RequestId}:{request.PartNumber}");
+                                await Task.Delay(TimeSpan.FromSeconds(5), ct);
+                            }
+                        }
+                        if (published)
+                        {
+                            await channel.BasicAckAsync(ea.DeliveryTag, false, ct);
+                        }
                     }
                     catch
                     {

@@ -6,7 +6,8 @@ using Manager.Utilities;
 
 namespace Manager.BackgroundServices;
 
-public class PendingDispatchService(SubtaskRepository subtaskRepository, TaskPublisher taskPublisher) : BackgroundService
+public class PendingDispatchService(SubtaskRepository subtaskRepository, TaskPublisher taskPublisher,
+    ILogger<PendingDispatchService> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
@@ -26,8 +27,16 @@ public class PendingDispatchService(SubtaskRepository subtaskRepository, TaskPub
                         MaxLength = subtask.MaxLength,
                         Alphabet = CrackAlphabet.GetAlphabet()
                     };
-
-                    await taskPublisher.PublishAsync(workerTask, ct);
+                    try
+                    {
+                        await taskPublisher.PublishAsync(workerTask, ct);
+                    }
+                    catch
+                    {
+                        logger.LogWarning($"Failed to publish subtask {subtask.RequestId}:{subtask.PartNumber}");
+                        await Task.Delay(TimeSpan.FromSeconds(5), ct);
+                        continue;
+                    }
                     await subtaskRepository.UpdateStatusAsync(subtask.RequestId, subtask.PartNumber, SubtaskStatus.QUEUED, ct);
                 }
                 catch

@@ -34,6 +34,15 @@ public class SubtaskRepository(IMongoDatabase database)
 
         return _subtasks.InsertManyAsync(session, subtasks, cancellationToken: ct);
     }
+
+    public Task ResetStaleQueuedToPendingAsync(TimeSpan staleAfter, CancellationToken ct = default)
+    {
+        var update = Builders<SubtaskDocument>.Update
+            .Set(x => x.Status, SubtaskStatus.PENDING_DISPATCH)
+            .Set(x => x.UpdatedAt, DateTime.UtcNow);
+        return _subtasks.UpdateManyAsync(x =>
+            x.Status == SubtaskStatus.QUEUED && x.UpdatedAt < DateTime.UtcNow - staleAfter, update, cancellationToken: ct);
+    }
     
     public async Task<long> CountNotCompletedAsync(Guid requestId, CancellationToken ct = default)
     {
