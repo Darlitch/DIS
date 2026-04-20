@@ -84,7 +84,7 @@ public class TaskConsumerService(BruteForceService bruteForceService, ResultPubl
                             }
                             catch (Exception ex)
                             {
-                                logger.LogWarning(ex, $"Failed to publish result for {request.RequestId}:{request.PartNumber}");
+                                logger.LogWarning($"Failed to publish result for {request.RequestId}:{request.PartNumber}");
                                 await Task.Delay(TimeSpan.FromSeconds(5), ct);
                             }
                         }
